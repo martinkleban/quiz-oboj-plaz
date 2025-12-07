@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <title>Kvíz – Obojživelníci a plazi</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 16px;
+    }
+
+    .quiz-card {
+      background: #020617;
+      border-radius: 16px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      max-width: 480px;
+      width: 100%;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    h1 {
+      font-size: 1.3rem;
+      margin: 0 0 12px;
+      text-align: center;
+    }
+
+    .progress {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #9ca3af;
+      margin-bottom: 12px;
+    }
+
+    .image-wrapper {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      background: #020617;
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #1f2937;
+      margin-bottom: 16px;
+    }
+
+    .image-wrapper img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .option-btn {
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid #1f2937;
+      background: #020617;
+      color: #e5e7eb;
+      font-size: 0.95rem;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.05s, border-color 0.15s;
+    }
+
+    .option-btn:hover:not(.disabled) {
+      background: #111827;
+      transform: translateY(-1px);
+    }
+
+    .option-btn.correct {
+      background: #065f46;
+      border-color: #10b981;
+    }
+
+    .option-btn.wrong {
+      background: #7f1d1d;
+      border-color: #f97373;
+    }
+
+    .option-btn.disabled {
+      cursor: default;
+      opacity: 0.8;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .feedback {
+      font-size: 0.9rem;
+    }
+
+    .btn {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: none;
+      background: #2563eb;
+      color: white;
+      font-weight: 500;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.15s, transform 0.05s;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      background: #1d4ed8;
+      transform: translateY(-1px);
+    }
+
+    .btn.secondary {
+      background: transparent;
+      border: 1px solid #374151;
+      color: #e5e7eb;
+    }
+
+    .btn.secondary:hover {
+      background: #111827;
+    }
+
+    .summary {
+      text-align: center;
+    }
+
+    .summary h2 {
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+
+    .summary p {
+      margin: 4px 0;
+    }
+
+    @media (max-width: 480px) {
+      .quiz-card {
+        padding: 16px;
+      }
+      h1 {
+        font-size: 1.1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-card" id="app">
+    <!-- obsah doplní JavaScript -->
+  </div>
+
+  <script>
+    // Seznam všech živočichů + názvy souborů obrázků:
+    const animals = [
+      { name: 'ČOLEK OBECNÝ',   image: 'colek-obecny.jpg' },
+      { name: 'MLOK SKVRNITÝ',  image: 'mlok-skvrnity.jpg' },
+      { name: 'SKOKAN ZELENÝ',  image: 'skokan-zeleny.jpg' },
+      { name: 'SKOKAN HNĚDÝ',   image: 'skokan-hnedy.jpg' },
+      { name: 'ROSNIČKA ZELENÁ',image: 'rosnicka-zelena.jpg' },
+      { name: 'ROPUCHA OBECNÁ', image: 'ropucha-obecna.jpg' },
+      { name: 'ŽELVA BAHENNÍ',  image: 'zelva-bahenni.jpg' },
+      { name: 'ŽELVA NÁDHERNÁ', image: 'zelva-nadherna.jpg' },
+      { name: 'ŽELVA SLONÍ',    image: 'zelva-sloni.jpg' },
+      { name: 'GAVIÁL INDICKÝ', image: 'gavial-indicky.jpg' },
+      { name: 'KROKODÝL NILSKÝ',image: 'krokodyl-nilsky.jpg' },
+      { name: 'UŽOVKA OBOJKOVÁ',image: 'uzovka-obojkova.jpg' },
+      { name: 'ZMIJE OBECNÁ',   image: 'zmije-obecna.jpg' },
+      { name: 'JEŠTĚRKA OBECNÁ',image: 'jesterka-obecna.jpg' },
+      { name: 'JEŠTĚRKA ZELENÁ',image: 'jesterka-zelena.jpg' },
+      { name: 'SLEPÝŠ KŘEHKÝ',  image: 'slepys-krehky.jpg' },
+      { name: 'VARAN KOMODSKÝ', image: 'varan-komodsky.jpg' }
+    ];
+
+    // Pomocné funkce
+    function shuffle(array) {
+      const arr = array.slice();
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    // Stav kvízu
+    let order = shuffle(animals);  // náhodné pořadí otázek
+    let currentIndex = 0;
+    let score = 0;
+    let answered = false;
+
+    const app = document.getElementById('app');
+
+    function startQuiz() {
+      order = shuffle(animals);
+      currentIndex = 0;
+      score = 0;
+      showQuestion();
+    }
+
+    function showQuestion() {
+      answered = false;
+      const total = order.length;
+      const q = order[currentIndex];
+
+      // Vyber 2 náhodné jiné možnosti
+      const others = shuffle(animals.filter(a => a.name !== q.name)).slice(0, 2);
+      const options = shuffle([q, ...others]);
+
+      app.innerHTML = `
+        <h1>Poznávací kvíz – obojživelníci a plazi</h1>
+        <div class="progress">Otázka ${currentIndex + 1} / ${total}</div>
+        <div class="image-wrapper">
+          <img src="${q.image}" alt="Kvíz obrázek" onerror="this.alt='Obrázek se nenačetl';" />
+        </div>
+        <div class="options">
+          ${options.map((opt, idx) => `
+            <button class="option-btn" data-name="${opt.name}" data-correct="${opt.name === q.name}">
+              ${String.fromCharCode(65 + idx)}. ${opt.name}
+            </button>
+          `).join('')}
+        </div>
+        <div class="controls">
+          <div class="feedback" id="feedback"></div>
+          <button class="btn" id="nextBtn" disabled>Další</button>
+        </div>
+      `;
+
+      document.querySelectorAll('.option-btn').forEach(btn => {
+        btn.addEventListener('click', () => handleAnswer(btn, q.name));
+      });
+
+      document.getElementById('nextBtn').addEventListener('click', () => {
+        if (currentIndex < total - 1) {
+          currentIndex++;
+          showQuestion();
+        } else {
+          showSummary();
+        }
+      });
+    }
+
+    function handleAnswer(button, correctName) {
+      if (answered) return;
+      answered = true;
+
+      const selectedName = button.dataset.name;
+      const isCorrect = selectedName === correctName;
+
+      const buttons = document.querySelectorAll('.option-btn');
+      buttons.forEach(b => {
+        b.classList.add('disabled');
+        const isBtnCorrect = b.dataset.name === correctName;
+        if (isBtnCorrect) {
+          b.classList.add('correct');
+        }
+        if (!isBtnCorrect && b === button) {
+          b.classList.add('wrong');
+        }
+      });
+
+      if (isCorrect) score++;
+
+      const feedback = document.getElementById('feedback');
+      feedback.textContent = isCorrect ? 'Správně! 🎉' : 'Špatně 😅';
+
+      const nextBtn = document.getElementById('nextBtn');
+      nextBtn.disabled = false;
+      nextBtn.textContent = (currentIndex < order.length - 1) ? 'Další otázka' : 'Zobrazit výsledky';
+    }
+
+    function showSummary() {
+      const total = order.length;
+      const percent = Math.round((score / total) * 100);
+
+      app.innerHTML = `
+        <div class="summary">
+          <h2>Výsledky kvízu</h2>
+          <p>Správné odpovědi: <strong>${score} / ${total}</strong></p>
+          <p>Úspěšnost: <strong>${percent}%</strong></p>
+          <p>${percent === 100 ? 'Wow, poznávací mistr! 🐸🐍' : 'Pěkná práce, můžeš to zkusit znovu a zlepšit se. 😉'}</p>
+          <button class="btn" id="restartBtn">Hrát znovu</button>
+        </div>
+      `;
+
+      document.getElementById('restartBtn').addEventListener('click', startQuiz);
+    }
+
+    // Start hned po načtení
+    startQuiz();
+  </script>
+</body>
+</html>
